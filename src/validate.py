@@ -12,6 +12,10 @@ W_OUT, H_OUT = 450, 140
 PLATE_RE = re.compile(r'[A-Z]{3}[0-9]{3}[A-Z]')
 
 
+def correct_camera_orientation(frame):
+    return cv2.flip(frame, 1)
+
+
 def find_plate_candidates(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -92,6 +96,8 @@ def main():
         ok, frame = cap.read()
         if not ok:
             break
+
+        frame = correct_camera_orientation(frame)
 
         vis = frame.copy()
         candidates = find_plate_candidates(frame)
