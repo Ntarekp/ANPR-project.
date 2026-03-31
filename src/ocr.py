@@ -10,6 +10,10 @@ AR_MIN, AR_MAX = 2.0, 8.0
 W_OUT, H_OUT = 450, 140
 
 
+def correct_camera_orientation(frame):
+    return cv2.flip(frame, 1)
+
+
 def find_plate_candidates(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -82,6 +86,8 @@ def main():
         ok, frame = cap.read()
         if not ok:
             break
+
+        frame = correct_camera_orientation(frame)
 
         vis = frame.copy()
         candidates = find_plate_candidates(frame)
