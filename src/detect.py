@@ -5,7 +5,7 @@ MIN_AREA = 600
 AR_MIN, AR_MAX = 2.0, 8.0
 
 def correct_camera_orientation(frame):
-    return cv2.flip(frame, 1)
+    return frame
 
 def find_plate_candidates(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)

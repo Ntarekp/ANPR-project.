@@ -2,7 +2,7 @@ import cv2
 
 
 def correct_camera_orientation(frame):
-    return cv2.flip(frame, 1)
+    return frame
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():

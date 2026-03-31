@@ -13,7 +13,7 @@ PLATE_RE = re.compile(r'[A-Z]{3}[0-9]{3}[A-Z]')
 
 
 def correct_camera_orientation(frame):
-    return cv2.flip(frame, 1)
+    return frame
 
 
 def find_plate_candidates(frame):

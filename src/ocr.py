@@ -11,7 +11,7 @@ W_OUT, H_OUT = 450, 140
 
 
 def correct_camera_orientation(frame):
-    return cv2.flip(frame, 1)
+    return frame
 
 
 def find_plate_candidates(frame):
