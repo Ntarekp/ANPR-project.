@@ -184,6 +184,51 @@ def main():
 
         frame = correct_camera_orientation(frame)
         vis = frame.copy()
+        
+        candidates = find_plate_candidates(frame)
+        if candidates:
+            rect = max(candidates, key=lambda r: r[1][0] * r[1][1])
+            box = cv2.boxPoints(rect).astype(int)
+            cv2.polylines(vis, [box], True, (0, 255, 0), 2)
+            
+            temp_plate = warp_plate(frame, rect)
+            temp_text, _ = read_plate_text(temp_plate)
+            temp_valid = extract_valid_plate(temp_text)
+            
+            card_height = 140
+            card_width = 380
+            card_x = vis.shape[1] - card_width - 20
+            card_y = 20
+            
+            overlay = vis.copy()
+            cv2.rectangle(overlay, (card_x, card_y), (card_x + card_width, card_y + card_height), (0, 100, 0), -1)
+            cv2.addWeighted(overlay, 0.7, vis, 0.3, 0, vis)
+            cv2.rectangle(vis, (card_x, card_y), (card_x + card_width, card_y + card_height), (0, 255, 0), 2)
+            
+            cv2.putText(vis, "Plate Extraction", (card_x + 15, card_y + 25), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
+            
+            if temp_valid:
+                cv2.putText(vis, f"Plate: {temp_valid}", (card_x + 15, card_y + 55), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                cv2.putText(vis, "Status: VALID", (card_x + 15, card_y + 80), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            elif temp_text:
+                cv2.putText(vis, f"OCR: {temp_text[:15]}", (card_x + 15, card_y + 55), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 165, 0), 2)
+                cv2.putText(vis, "Status: Validation Failed", (card_x + 15, card_y + 80), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 165, 0), 1)
+            else:
+                cv2.putText(vis, "OCR: Processing...", (card_x + 15, card_y + 55), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                cv2.putText(vis, "Status: No Text", (card_x + 15, card_y + 80), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+            
+            cv2.putText(vis, f"Candidates: {len(candidates)}", (card_x + 15, card_y + 105), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+            cv2.putText(vis, "Press 'c' to capture", (card_x + 15, card_y + 125), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+        
         cv2.putText(vis, message, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.75, message_color, 2)
         cv2.putText(
             vis,
