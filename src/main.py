@@ -13,13 +13,19 @@ pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tessera
 MIN_AREA = 600
 AR_MIN, AR_MAX = 2.0, 8.0
 W_OUT, H_OUT = 450, 140
-PLATE_RE = re.compile(r"[A-Z]{3}[0-9]{3}[A-Z]")
+DEFAULT_PLATE_REGEX = r"[A-Z]{3}[0-9]{3}[A-Z]"
+PLATE_RE = re.compile(os.getenv("ANPR_PLATE_REGEX", DEFAULT_PLATE_REGEX))
 COOLDOWN_SECONDS = 8
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 CSV_PATH = os.path.join(BASE_DIR, "data", "plates.csv")
 VEHICLE_IMAGE_DIR = os.path.join(BASE_DIR, "data", "vehicles")
 PLATE_IMAGE_DIR = os.path.join(BASE_DIR, "data", "plates")
+SCREENSHOTS_DIR = os.path.join(BASE_DIR, "screenshots")
+
+DETECTION_SCREENSHOT_PATH = os.path.join(SCREENSHOTS_DIR, "detection.png")
+ALIGNMENT_SCREENSHOT_PATH = os.path.join(SCREENSHOTS_DIR, "alignment.png")
+OCR_SCREENSHOT_PATH = os.path.join(SCREENSHOTS_DIR, "ocr.png")
 
 
 def correct_camera_orientation(frame):
@@ -37,6 +43,7 @@ def ensure_csv_file(path):
 def ensure_output_dirs():
     os.makedirs(VEHICLE_IMAGE_DIR, exist_ok=True)
     os.makedirs(PLATE_IMAGE_DIR, exist_ok=True)
+    os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
 
 
 def find_plate_candidates(frame):
@@ -117,6 +124,16 @@ def append_plate_log(path, plate):
         writer.writerow([plate, time.strftime("%Y-%m-%d %H:%M:%S")])
 
 
+def save_required_screenshots(frame, rect, aligned_plate, thresh):
+    detection_vis = frame.copy()
+    box = cv2.boxPoints(rect).astype(int)
+    cv2.polylines(detection_vis, [box], True, (0, 255, 0), 2)
+
+    cv2.imwrite(DETECTION_SCREENSHOT_PATH, detection_vis)
+    cv2.imwrite(ALIGNMENT_SCREENSHOT_PATH, aligned_plate)
+    cv2.imwrite(OCR_SCREENSHOT_PATH, thresh)
+
+
 def process_saved_vehicle_image(image_path):
     frame = cv2.imread(image_path)
     if frame is None:
@@ -130,6 +147,8 @@ def process_saved_vehicle_image(image_path):
     aligned_plate = warp_plate(frame, rect)
     raw_text, thresh = read_plate_text(aligned_plate)
     valid_plate = extract_valid_plate(raw_text)
+
+    save_required_screenshots(frame, rect, aligned_plate, thresh)
 
     timestamp_tag = time.strftime("%Y%m%d_%H%M%S")
     if valid_plate:
@@ -200,6 +219,7 @@ def main():
 
             valid_plate, raw_text, plate_path, aligned_plate, thresh = process_saved_vehicle_image(vehicle_path)
             if plate_path is None:
+                append_plate_log(CSV_PATH, "UNKNOWN")
                 message = f"Vehicle saved: {vehicle_filename} | Plate not detected"
                 message_color = (0, 165, 255)
             elif valid_plate:
@@ -211,9 +231,11 @@ def main():
                 message = f"Saved vehicle + plate image | VALID: {valid_plate}"
                 message_color = (0, 255, 0)
             elif raw_text:
+                append_plate_log(CSV_PATH, raw_text)
                 message = f"Saved vehicle + plate image | OCR: {raw_text}"
                 message_color = (0, 165, 255)
             else:
+                append_plate_log(CSV_PATH, "UNKNOWN")
                 message = f"Vehicle saved: {vehicle_filename} | No OCR text"
                 message_color = (0, 165, 255)
 

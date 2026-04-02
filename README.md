@@ -81,7 +81,25 @@ python src/main.py
 - `align.py`: detection + alignment stage
 - `ocr.py`: detection + alignment + OCR
 - `validate.py`: adds regex validation
-- `main.py`: full pipeline including CSV logging to `data/plates.csv`
+- `main.py`: full capture pipeline with CSV logging to `data/plates.csv`
+
+### Full Capture Workflow (`src/main.py`)
+
+1. Start the script.
+2. Press `c` to capture a **vehicle image** from the camera.
+3. The script saves the vehicle image, then processes that saved image to:
+   - detect the number plate,
+   - align it,
+   - run OCR,
+   - validate via regex,
+   - save the extracted plate screenshot.
+4. Captured results are logged into CSV with timestamp.
+
+Saved outputs:
+
+- Vehicle captures: `data/vehicles/`
+- Extracted plate screenshots: `data/plates/`
+- Capture logs: `data/plates.csv`
 
 ## Camera Orientation (Important)
 
@@ -89,7 +107,9 @@ The camera frame is corrected so that left/right are not mirrored (real-left sta
 
 ## Screenshots of Results
 
-Place result screenshots in the `screenshots/` folder with these exact names:
+These screenshots are automatically updated with real capture results when you press `c` in `src/main.py`.
+
+Expected files in `screenshots/`:
 
 - `screenshots/detection.png`
 - `screenshots/alignment.png`
@@ -103,7 +123,7 @@ They are rendered below in the README:
 
 ## Output Logging
 
-Validated plates are appended to:
+Captured results are appended to:
 
 - `data/plates.csv`
 
@@ -112,4 +132,12 @@ CSV format:
 ```csv
 plate,timestamp
 ABC123D,2026-03-31 11:00:00
+UNKNOWN,2026-03-31 11:00:05
+```
+
+If your local plate format differs, set a custom validation regex before running:
+
+```powershell
+$env:ANPR_PLATE_REGEX = "[A-Z0-9]{6,8}"
+python src/main.py
 ```
