@@ -251,9 +251,17 @@ def main():
 
         cv2.imshow("ANPR Full Pipeline", vis)
         if aligned_plate is not None:
-            cv2.imshow("Aligned Plate", aligned_plate)
+            plate_display = aligned_plate.copy()
+            if plate_display.shape[0] < 200:
+                scale = 200 / plate_display.shape[0]
+                plate_display = cv2.resize(plate_display, None, fx=scale, fy=scale)
+            cv2.imshow("Aligned Plate", plate_display)
         if thresh is not None:
-            cv2.imshow("OCR Threshold", thresh)
+            thresh_display = cv2.cvtColor(thresh, cv2.COLOR_GRAY2BGR)
+            if thresh_display.shape[0] < 200:
+                scale = 200 / thresh_display.shape[0]
+                thresh_display = cv2.resize(thresh_display, None, fx=scale, fy=scale)
+            cv2.imshow("OCR Threshold", thresh_display)
 
         key = cv2.waitKey(1) & 0xFF
         if key == ord("c"):
